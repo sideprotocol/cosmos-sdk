@@ -698,7 +698,11 @@ func addressBytesFromHexString(address string) ([]byte, error) {
 // cacheBech32Addr is not concurrency safe. Concurrent access to cache causes race condition.
 func cacheBech32Addr(prefix string, addr []byte, cache *simplelru.LRU, cacheKey string) string {
 	bech32Addr, err := bech32.ConvertAndEncode(prefix, addr)
+
 	if err != nil {
+		fmt.Println("bech323Addr:===>", bech32Addr)
+		fmt.Println("addr:===>", addr)
+		fmt.Println("prefix:===>", prefix)
 		panic(err)
 	}
 	if IsAddrCacheEnabled() {
