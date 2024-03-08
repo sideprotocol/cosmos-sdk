@@ -8,7 +8,7 @@ import (
 
 // ConvertAndEncode converts from a base256 encoded byte string to base32 encoded byte string and then to bech32.
 func ConvertAndEncode(hrp string, data []byte) (string, error) {
-	converted, err := bech32.ConvertBits(data, 8, 5, true)
+	converted, err := bech32.ConvertBits(data, 8, 5, false)
 	if err != nil {
 		return "", fmt.Errorf("encoding bech32 failed: %w", err)
 	}
