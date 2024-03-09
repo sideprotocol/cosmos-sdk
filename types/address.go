@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -11,8 +12,10 @@ import (
 	"sync/atomic"
 
 	"github.com/hashicorp/golang-lru/simplelru"
+	"golang.org/x/crypto/ripemd160"
 	"sigs.k8s.io/yaml"
 
+	"github.com/cometbft/cometbft/crypto"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/internal/conv"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -517,7 +520,11 @@ func ConsAddressFromBech32(address string) (addr ConsAddress, err error) {
 
 // get ConsAddress from pubkey
 func GetConsAddress(pubkey cryptotypes.PubKey) ConsAddress {
-	return ConsAddress(pubkey.Address())
+	sha := sha256.Sum256(pubkey.Bytes())
+	hasherRIPEMD160 := ripemd160.New()
+	hasherRIPEMD160.Write(sha[:]) // does not error
+	return ConsAddress(crypto.Address(hasherRIPEMD160.Sum(nil)))
+	//return ConsAddress(pubkey.Address())
 }
 
 // Returns boolean for whether two ConsAddress are Equal
