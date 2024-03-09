@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -12,10 +11,9 @@ import (
 	"sync/atomic"
 
 	"github.com/hashicorp/golang-lru/simplelru"
-	"golang.org/x/crypto/ripemd160"
 	"sigs.k8s.io/yaml"
 
-	"github.com/cometbft/cometbft/crypto"
+	btcbetch32 "github.com/cosmos/btcutil/bech32"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/internal/conv"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -520,11 +518,11 @@ func ConsAddressFromBech32(address string) (addr ConsAddress, err error) {
 
 // get ConsAddress from pubkey
 func GetConsAddress(pubkey cryptotypes.PubKey) ConsAddress {
-	sha := sha256.Sum256(pubkey.Bytes())
-	hasherRIPEMD160 := ripemd160.New()
-	hasherRIPEMD160.Write(sha[:]) // does not error
-	return ConsAddress(crypto.Address(hasherRIPEMD160.Sum(nil)))
-	//return ConsAddress(pubkey.Address())
+	converted, err := btcbetch32.ConvertBits(pubkey.Address().Bytes(), 8, 5, true)
+	if err != nil {
+		panic(err)
+	}
+	return ConsAddress(converted)
 }
 
 // Returns boolean for whether two ConsAddress are Equal
@@ -704,13 +702,17 @@ func addressBytesFromHexString(address string) ([]byte, error) {
 
 // cacheBech32Addr is not concurrency safe. Concurrent access to cache causes race condition.
 func cacheBech32Addr(prefix string, addr []byte, cache *simplelru.LRU, cacheKey string) string {
+	// try to convert without conversion
 	bech32Addr, err := bech32.ConvertAndEncode(prefix, addr)
-
 	if err != nil {
-		fmt.Println("bech323Addr:===>", bech32Addr)
-		fmt.Println("addr:===>", addr)
-		fmt.Println("prefix:===>", prefix)
-		panic(err)
+		converted, err := btcbetch32.ConvertBits(addr, 8, 5, true)
+		if err != nil {
+			panic(err)
+		}
+		bech32Addr, err = bech32.ConvertAndEncode(prefix, converted)
+		if err != nil {
+			panic(err)
+		}
 	}
 	if IsAddrCacheEnabled() {
 		cache.Add(cacheKey, bech32Addr)
