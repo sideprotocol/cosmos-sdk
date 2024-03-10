@@ -61,6 +61,37 @@ func TestNewKeyring(t *testing.T) {
 	require.Equal(t, "foo", k.Name)
 }
 
+func NewOption() Option {
+	return func(options *Options) {
+		options.SupportedAlgos = SigningAlgoList{hd.SegWit, hd.Secp256k1}
+		options.SupportedAlgosLedger = SigningAlgoList{hd.SegWit, hd.Secp256k1}
+		// options.LedgerDerivation = func() (nil, error)
+		// options.LedgerCreateKey = options.LedgerCreateKey
+		// options.LedgerAppName = options.LedgerAppName
+		// options.LedgerSigSkipDERConv = options.LedgerSigSkipDERConv
+	}
+}
+
+func TestNewAccount(t *testing.T) {
+
+	cdc := getCodec()
+
+	kr, err := New("q123", BackendMemory, "", nil, cdc, NewOption())
+	require.NoError(t, err)
+
+	algos, _ := kr.SupportedAlgorithms()
+	t.Log("Algos: ", algos)
+	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+	acc, _ := kr.NewAccount("test", mnemonic, DefaultBIP39Passphrase, sdk.FullFundraiserPath, hd.SegWit)
+	addr, err := acc.GetAddress()
+	require.NoError(t, err)
+	t.Log("Account", addr.String(), acc.PubKey.String())
+
+	list, err := kr.List()
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+}
+
 func TestKeyManagementKeyRing(t *testing.T) {
 	cdc := getCodec()
 	tempDir := t.TempDir()
