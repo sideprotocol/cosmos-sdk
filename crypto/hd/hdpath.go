@@ -122,6 +122,13 @@ func NewFundraiserParams(account, coinType, addressIdx uint32) *BIP44Params {
 	return NewParams(44, coinType, account, false, addressIdx)
 }
 
+// NewFundraiserParams creates a BIP parameter object from the params:
+// m / purpose / coinType' / account' / 0 / address_index
+// The fixed parameters (purpose', coin_type', and change) are determined by what was used in the fundraiser.
+func NewFundraiserParamsWithPurpose(purpose, account, coinType, addressIdx uint32) *BIP44Params {
+	return NewParams(purpose, coinType, account, false, addressIdx)
+}
+
 // DerivationPath returns the BIP44 fields as an array.
 func (p BIP44Params) DerivationPath() []uint32 {
 	change := uint32(0)
@@ -278,4 +285,8 @@ func i64(key []byte, data []byte) (il [32]byte, ir [32]byte) {
 // CreateHDPath returns BIP 44 object from account and index parameters.
 func CreateHDPath(coinType, account, index uint32) *BIP44Params {
 	return NewFundraiserParams(account, coinType, index)
+}
+
+func CreateHDPathWithPurpose(purpose, coinType, account, index uint32) *BIP44Params {
+	return NewFundraiserParamsWithPurpose(purpose, account, coinType, index)
 }

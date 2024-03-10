@@ -210,7 +210,11 @@ func runAddCmd(ctx client.Context, cmd *cobra.Command, args []string, inBuf *buf
 	useLedger, _ := cmd.Flags().GetBool(flags.FlagUseLedger)
 
 	if len(hdPath) == 0 {
-		hdPath = hd.CreateHDPath(coinType, account, index).String()
+		if algoStr == "segwit" {
+			hdPath = hd.CreateHDPathWithPurpose(84, coinType, account, index).String()
+		} else {
+			hdPath = hd.CreateHDPath(coinType, account, index).String()
+		}
 	} else if useLedger {
 		return errors.New("cannot set custom bip32 path with ledger")
 	}
