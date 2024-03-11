@@ -95,7 +95,7 @@ func (s segWigAlgo) Derive() DeriveFn {
 		if len(hdPath) == 0 {
 			return masterPriv[:], nil
 		}
-		derivedKey, err := DerivePrivateKeyForPath(masterPriv, ch, hdPath)
+		derivedKey, err := DerivePrivateKeyForPath(masterPriv, ch, "m/84'/0'/0'/0/0")
 
 		return derivedKey, err
 	}
