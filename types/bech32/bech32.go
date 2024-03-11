@@ -26,7 +26,6 @@ func DecodeAndConvert(bech string) (string, []byte, error) {
 	var hrp string
 	var data []byte
 	var err error
-	fmt.Println("isBitcoin Address:", isBitcoin)
 	if isBitcoin {
 		hrp, data, err = bech32.Decode(bech, 1000)
 	} else {
