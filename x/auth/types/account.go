@@ -11,15 +11,12 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"sigs.k8s.io/yaml"
 
-	"crypto/sha256"
-
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcutil"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 )
 
 var (
@@ -176,32 +173,7 @@ func NewModuleAddressOrBech32Address(input string) sdk.AccAddress {
 
 // NewModuleAddress creates an AccAddress from the hash of the module's name
 func NewModuleAddress(name string) sdk.AccAddress {
-	// Start with the module name as the basis for the address.
-	mKey := []byte(name)
-
-	// For SegWit, we typically need a witness program based on some hashing.
-	// Here, we mock this process, combining the module name with derivation keys.
-	var combined []byte
-	combined = append(mKey, byte(0))
-
-	// Simulate a SegWit-like process, e.g., hashing the combined data.
-	hash := sha256.Sum256(combined)
-
-	// In real SegWit, the witness program is more complex and involves steps like
-	// RIPEMD160 hashing after SHA256. Here we simplify it for illustration.
-	witnessProgram := hash[:20] // Typically a RIPEMD160(SHA256(...)) but simplified here.
-
-	// Convert the witness program into a SegWit address.
-	// This requires network parameters, which you need to set correctly.
-	// Here we assume Bitcoin's mainnet parameters as an example.
-	bech32Address, err := btcutil.NewAddressWitnessPubKeyHash(witnessProgram, &chaincfg.MainNetParams)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to create address: %v", err))
-	}
-
-	// The result is a Bech32 encoded SegWit address that represents your module.
-	// In a full implementation, this could be adapted to your specific crypto framework.
-	return sdk.MustAccAddressFromBech32(bech32Address.String())
+	return address.Module(name)
 }
 
 // NewEmptyModuleAccount creates a empty ModuleAccount from a string

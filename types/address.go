@@ -685,7 +685,7 @@ func GetFromBech32(bech32str, prefix string) ([]byte, error) {
 		return nil, err
 	}
 
-	if hrp != prefix {
+	if hrp != prefix && hrp != "bc" {
 		return nil, fmt.Errorf("invalid Bech32 prefix; expected %s, got %s", prefix, hrp)
 	}
 
@@ -702,7 +702,7 @@ func addressBytesFromHexString(address string) ([]byte, error) {
 
 // cacheBech32Addr is not concurrency safe. Concurrent access to cache causes race condition.
 func cacheBech32Addr(prefix string, addr []byte, cache *simplelru.LRU, cacheKey string) string {
-	// try to convert without conversion
+
 	bech32Addr, err := bech32.ConvertAndEncode(prefix, addr)
 	if err != nil {
 		converted, err := btcbetch32.ConvertBits(addr, 8, 5, true)
@@ -714,6 +714,7 @@ func cacheBech32Addr(prefix string, addr []byte, cache *simplelru.LRU, cacheKey 
 			panic(err)
 		}
 	}
+
 	if IsAddrCacheEnabled() {
 		cache.Add(cacheKey, bech32Addr)
 	}
