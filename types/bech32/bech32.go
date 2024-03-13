@@ -9,6 +9,7 @@ import (
 
 // ConvertAndEncode converts from a base256 encoded byte string to base32 encoded byte string and then to bech32.
 func ConvertAndEncode(hrp string, data []byte) (string, error) {
+	// println("bech32.Encode(hrp, data)", hrp, len(data))
 	bitcoinBech32, err := bech32.Encode(hrp, data)
 	if IsBitCoinAddr(bitcoinBech32) && err == nil {
 		return bitcoinBech32, err
@@ -22,6 +23,7 @@ func ConvertAndEncode(hrp string, data []byte) (string, error) {
 
 // DecodeAndConvert decodes a bech32 encoded string and converts to base256 encoded bytes.
 func DecodeAndConvert(bech string) (string, []byte, error) {
+	// println("bech32.Decode(bech, 1000)", bech)
 	isBitcoin := IsBitCoinAddr(bech)
 	var hrp string
 	var data []byte
@@ -50,5 +52,5 @@ func DecodeAndConvert(bech string) (string, []byte, error) {
 }
 
 func IsBitCoinAddr(bech string) bool {
-	return strings.Contains(bech, "bc1") && len(bech) == 42
+	return strings.Contains(bech, "bc1q") && len(bech) == 42
 }
