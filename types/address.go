@@ -705,11 +705,11 @@ func cacheBech32Addr(prefix string, addr []byte, cache *simplelru.LRU, cacheKey 
 
 	bech32Addr, err := bech32.ConvertAndEncode(prefix, addr)
 	if err != nil {
-		converted, err := btcbetch32.ConvertBits(addr, 8, 5, true)
-		if err != nil {
-			panic(err)
-		}
-		bech32Addr, err = bech32.ConvertAndEncode(prefix, converted)
+		// converted, err := btcbetch32.ConvertBits(addr, 8, 5, true)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		bech32Addr, err = btcbetch32.Encode(prefix, addr)
 		if err != nil {
 			panic(err)
 		}
