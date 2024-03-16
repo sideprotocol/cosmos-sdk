@@ -1,6 +1,7 @@
 package segwit
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 
 	"github.com/cometbft/cometbft/crypto"
@@ -71,8 +72,15 @@ func (privKey *PrivKey) Sign(msg []byte) ([]byte, error) {
 	// }
 	derivedKey, _ := btcec.PrivKeyFromBytes(privKey.Key)
 
-	signature := ecdsa.Sign(derivedKey, MagicHash(msg))
-	return signature.Serialize(), nil
+	hash := MagicHash(msg)
+
+	println("hash:", hash)
+
+	sig, err := ecdsa.SignCompact(derivedKey, hash, true)
+	println("inner sig:", base64.StdEncoding.EncodeToString(sig))
+	return sig, err
+	// signature := ecdsa.Sign(derivedKey, hash)
+	// return signature.Serialize(), nil
 	//return derivedKey.Sign(magicHash(msg))
 }
 
@@ -83,11 +91,23 @@ func (pubKey *PubKey) VerifySignature(msg []byte, sigStr []byte) bool {
 	if err != nil {
 		return false
 	}
+	println("gotSig:", base64.StdEncoding.EncodeToString(sigStr))
+	// hash := magicHash(msg)
+	// signature, err := ecdsa.ParseSignature(sigStr)
+	// if err != nil {
+	// 	return false
+	// }
+	// return signature.Verify(hash, pk)
+
+	println("sigStr:", sigStr)
 	hash := magicHash(msg)
-	signature, err := ecdsa.ParseSignature(sigStr)
+	gotPubKey, gotCompressed, err := ecdsa.RecoverCompact(sigStr, hash)
 	if err != nil {
 		return false
 	}
-	return signature.Verify(hash, pk)
+	if !gotCompressed {
+		return false
+	}
+	return gotPubKey.IsEqual(pk)
 
 }

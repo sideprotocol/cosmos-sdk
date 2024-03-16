@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosmos/btcutil/bech32"
 
-	ecdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
 	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
@@ -56,10 +55,6 @@ func TestSegwit(t *testing.T) {
 	sig, err := privKey.Sign([]byte("1234"))
 	assert.NoError(t, err, "Sign should not fail")
 	t.Log("sig:", base64.StdEncoding.EncodeToString(sig))
-
-	signature, err2 := ecdsa.ParseDERSignature(sig)
-	assert.NoError(t, err2)
-	t.Log("signature:", signature)
 
 	pubKey := privKey.PubKey()
 	assert.NotNil(t, pubKey, "Public key should not be nil")
