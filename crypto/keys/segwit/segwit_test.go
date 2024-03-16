@@ -3,6 +3,8 @@ package segwit_test
 import (
 	//"fmt"
 
+	"encoding/base64"
+	"encoding/hex"
 	"strings"
 	"testing"
 
@@ -13,9 +15,34 @@ import (
 
 	"github.com/cosmos/btcutil/bech32"
 
+	ecdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
+	"github.com/cometbft/cometbft/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
 )
+
+func TestNumbers(t *testing.T) {
+	t.Logf("Test numbers")
+	msg := []byte("1234")
+	prefix := segwit.VarintBufNum(uint64(len(segwit.MagicBytes)))
+	t.Log("prefix1:", prefix)
+	prefix2 := segwit.VarintBufNum(uint64(len(msg)))
+	t.Log("prefix2:", prefix2)
+
+	buf := append(prefix, segwit.MagicBytes...)
+	buf = append(buf, prefix2...)
+	buf = append(buf, msg...)
+
+	t.Log("buf:", buf)
+
+	buf = crypto.Sha256(buf)
+	buf = crypto.Sha256(buf)
+	// buf = crypto.SHA256.New().Sum(buf)
+
+	t.Log("hash:", buf)
+	t.Log("hash:", hex.EncodeToString(buf))
+
+}
 
 func TestSegwit(t *testing.T) {
 	mnemonic := "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
@@ -26,8 +53,19 @@ func TestSegwit(t *testing.T) {
 	assert.NoError(t, err, "Private key derivation should not fail")
 	privKey := segwit.PrivKey{Key: derivedPrivKey}
 
+	sig, err := privKey.Sign([]byte("1234"))
+	assert.NoError(t, err, "Sign should not fail")
+	t.Log("sig:", base64.StdEncoding.EncodeToString(sig))
+
+	signature, err2 := ecdsa.ParseDERSignature(sig)
+	assert.NoError(t, err2)
+	t.Log("signature:", signature)
+
 	pubKey := privKey.PubKey()
 	assert.NotNil(t, pubKey, "Public key should not be nil")
+
+	verify := pubKey.VerifySignature([]byte("1234"), sig)
+	assert.True(t, verify, "Verify should be true")
 
 	bech32Address, err := bech32.Encode("bc", pubKey.Address().Bytes())
 	// bech32Address, err := segwit.BitCoinAddr(pubKey.Bytes())

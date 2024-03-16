@@ -1,15 +1,17 @@
 package segwit
 
 import (
-	"crypto"
 	"encoding/binary"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cometbft/cometbft/crypto"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
 )
 
 var MagicBytes = []byte("Bitcoin Signed Message:\n")
 
-func varintBufNum(n uint64) []byte {
+func VarintBufNum(n uint64) []byte {
 	var buf []byte
 	if n < 253 {
 		// buf = Buffer.alloc(1);
@@ -43,6 +45,9 @@ func varintBufNum(n uint64) []byte {
 	return buf
 }
 
+func MagicHash(msg []byte) []byte {
+	return magicHash(msg)
+}
 func magicHash(msg []byte) []byte {
 
 	// const prefix1 = varintBufNum(MAGIC_BYTES.length);
@@ -50,33 +55,39 @@ func magicHash(msg []byte) []byte {
 	// const prefix2 = varintBufNum(messageBuffer.length);
 	// const buf = Buffer.concat([prefix1, MAGIC_BYTES, prefix2, messageBuffer]);
 	// return base.doubleSha256(buf);
-	prefix1 := varintBufNum(uint64(len(MagicBytes)))
-	prefix2 := varintBufNum(uint64(len(msg)))
+	prefix1 := VarintBufNum(uint64(len(MagicBytes)))
+	prefix2 := VarintBufNum(uint64(len(msg)))
 	buf := append(prefix1, MagicBytes...)
 	buf = append(buf, prefix2...)
 	buf = append(buf, msg...)
 
-	return crypto.SHA256.New().Sum(buf)
+	return crypto.Sha256(crypto.Sha256(buf))
 }
 
 // Sign creates an ECDSA signature on curve Secp256k1, using SHA256 on the msg.
 func (privKey *PrivKey) Sign(msg []byte) ([]byte, error) {
-	derivedKey := secp256k1.PrivKey{
-		Key: privKey.Key,
-	}
-	return derivedKey.Sign(magicHash(msg))
+	// derivedKey := secp256k1.PrivKey{
+	// 	Key: privKey.Key,
+	// }
+	derivedKey, _ := btcec.PrivKeyFromBytes(privKey.Key)
+
+	signature := ecdsa.Sign(derivedKey, MagicHash(msg))
+	return signature.Serialize(), nil
+	//return derivedKey.Sign(magicHash(msg))
 }
 
 // VerifySignature validates the signature.
 // The msg will be hashed prior to signature verification.
 func (pubKey *PubKey) VerifySignature(msg []byte, sigStr []byte) bool {
-	derivedPubKey := secp256k1.PubKey{
-		Key: pubKey.Key,
+	pk, err := btcec.ParsePubKey(pubKey.Key)
+	if err != nil {
+		return false
 	}
 	hash := magicHash(msg)
-	if derivedPubKey.VerifySignature(hash, sigStr) {
-		return true
+	signature, err := ecdsa.ParseSignature(sigStr)
+	if err != nil {
+		return false
 	}
+	return signature.Verify(hash, pk)
 
-	return derivedPubKey.VerifySignature(crypto.SHA256.New().Sum(hash), sigStr)
 }
