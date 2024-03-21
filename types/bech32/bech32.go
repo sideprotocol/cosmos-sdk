@@ -9,12 +9,11 @@ import (
 
 // ConvertAndEncode converts from a base256 encoded byte string to base32 encoded byte string and then to bech32.
 func ConvertAndEncode(hrp string, data []byte) (string, error) {
-	// println("bech32.Encode(hrp, data)", hrp, len(data))
 	bitcoinBech32, err := bech32.Encode(hrp, data)
 	if IsBitCoinAddr(bitcoinBech32) && err == nil {
 		return bitcoinBech32, err
 	}
-	converted, err := bech32.ConvertBits(data, 8, 5, false)
+	converted, err := bech32.ConvertBits(data, 8, 5, true)
 	if err != nil {
 		return "", fmt.Errorf("encoding bech32 failed: %w", err)
 	}
