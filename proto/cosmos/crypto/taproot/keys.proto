@@ -1,18 +1,18 @@
 syntax = "proto3";
-package cosmos.crypto.segwit;
+package cosmos.crypto.taproot;
 
 import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/cosmos/cosmos-sdk/crypto/keys/segwit";
+option go_package = "github.com/cosmos/cosmos-sdk/crypto/keys/taproot";
 
-// PubKey defines a secp256k1 public key for SegWit.
+// PubKey defines a secp256k1 public key for Taproot.
 // Key is the compressed form of the pubkey. The first byte depends is a 0x02 byte
 // if the y-coordinate is the lexicographically largest of the two associated with
 // the x-coordinate. Otherwise the first byte is a 0x03.
 // This prefix is followed with the x-coordinate.
 message PubKey {
-  option (amino.name) = "bitcoin/PubKeySegWit";
+  option (amino.name) = "bitcoin/PubKeyTaproot";
   // The Amino encoding is simply the inner bytes field, and not the Amino
   // encoding of the whole PubKey struct.
   //
@@ -31,7 +31,7 @@ message PubKey {
 
 // PrivKey defines a SegWit private key.
 message PrivKey {
-  option (amino.name)             = "bitcoin/PrivKeySegWit";
+  option (amino.name)             = "bitcoin/PrivKeyTaproot";
   option (amino.message_encoding) = "key_field";
 
   bytes key = 1;
