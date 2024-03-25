@@ -31,8 +31,19 @@ func FuzzDecodeAndConvert(f *testing.F) {
 
 	f.Add("shasum149yfqne0parehrupja55kvqcfvxja5wpe54pas8mshffngvj53rs93fk75")
 	f.Add("bech321er8m900ayvv9rg5r6ush4nzvqhj4p9tqnxqkxaaxrs4ueuvhurcs4x3j4j")
+	f.Add("bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr")
 
 	f.Fuzz(func(t *testing.T, str string) {
 		_, _, _ = bech32.DecodeAndConvert(str)
 	})
+}
+
+func TestDecodeString(t *testing.T) {
+	hrp, _, err := bech32.DecodeAndConvert("bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
+	require.NoError(t, err)
+	require.Equal(t, "bc", hrp)
+	hrp, _, err = bech32.DecodeAndConvert("bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr")
+	require.NoError(t, err)
+	require.Equal(t, "bc", hrp)
+
 }

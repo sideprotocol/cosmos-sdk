@@ -217,7 +217,7 @@ func newKeystore(kr keyring.Keyring, cdc codec.Codec, backend string, opts ...Op
 	// Default options for keybase, these can be overwritten using the
 	// Option function
 	options := Options{
-		SupportedAlgos:       SigningAlgoList{hd.Secp256k1, hd.SegWit},
+		SupportedAlgos:       SigningAlgoList{hd.Secp256k1, hd.SegWit, hd.Taproot},
 		SupportedAlgosLedger: SigningAlgoList{hd.Secp256k1},
 	}
 
@@ -523,6 +523,7 @@ func (ks keystore) Delete(uid string) error {
 }
 
 func (ks keystore) KeyByAddress(address sdk.Address) (*Record, error) {
+	println("KeyByAddress", hex.EncodeToString(address.Bytes()), address.String())
 	ik, err := ks.db.Get(addrHexKeyAsString(address))
 	if err != nil {
 		return nil, wrapKeyNotFound(err, fmt.Sprintf("key with address %s not found", address.String()))

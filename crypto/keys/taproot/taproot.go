@@ -1,4 +1,4 @@
-package segwit
+package taproot
 
 import (
 	"bytes"
@@ -9,12 +9,12 @@ import (
 	"math/big"
 
 	secp256k1 "github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/cometbft/cometbft/crypto"
 
 	//nolint: staticcheck
-	"github.com/cosmos/btcutil/bech32"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -27,9 +27,9 @@ var (
 
 const (
 	PrivKeySize = 32
-	keyType     = "segwit"
-	PrivKeyName = "bitcoin/PrivKeySegWit"
-	PubKeyName  = "bitcoin/PubKeySegWit"
+	keyType     = "taproot"
+	PrivKeyName = "bitcoin/PrivKeyTaproot"
+	PubKeyName  = "bitcoin/PubKeyTaproot"
 )
 
 // Bytes returns the byte representation of the Private Key.
@@ -40,9 +40,8 @@ func (privKey *PrivKey) Bytes() []byte {
 // PubKey performs the point-scalar multiplication from the privKey on the
 // generator point to get the pubkey.
 func (privKey *PrivKey) PubKey() cryptotypes.PubKey {
-	_, pubkeyObject := secp256k1.PrivKeyFromBytes(privKey.Key)
-	pk := pubkeyObject.SerializeCompressed()
-	return &PubKey{Key: pk}
+	_, pubKey := secp256k1.PrivKeyFromBytes(privKey.Key)
+	return &PubKey{Key: pubKey.SerializeCompressed()}
 }
 
 // Equals - you probably don't need to use this.
@@ -158,16 +157,14 @@ func (pubKey *PubKey) Address() crypto.Address {
 		panic("length of pubkey is incorrect") // Handle this as needed
 	}
 
-	witnessProg := btcutil.Hash160(pubKey.Bytes())
-	bech32Address, err := btcutil.NewAddressWitnessPubKeyHash(witnessProg, &chaincfg.MainNetParams)
+	pk, err := secp256k1.ParsePubKey(pubKey.Key)
 	if err != nil {
-		panic(err)
+		panic("parse pubkey failed")
 	}
-	_, bz, err1 := bech32.Decode(bech32Address.String(), 1023)
-	if err1 != nil {
-		panic(err1)
-	}
-	return crypto.Address(bz)
+
+	tp := txscript.ComputeTaprootKeyNoScript(pk)
+	witnessProg := schnorr.SerializePubKey(tp)
+	return crypto.Address(witnessProg)
 }
 
 // Bytes returns the pubkey byte format.
@@ -176,7 +173,7 @@ func (pubKey *PubKey) Bytes() []byte {
 }
 
 func (pubKey *PubKey) String() string {
-	return fmt.Sprintf("PubKeySegWit{%X}", pubKey.Key)
+	return fmt.Sprintf("PubKeyTaproot{%X}", pubKey.Key)
 }
 
 func (pubKey *PubKey) Type() string {
