@@ -41,8 +41,7 @@ func (privKey *PrivKey) Bytes() []byte {
 // generator point to get the pubkey.
 func (privKey *PrivKey) PubKey() cryptotypes.PubKey {
 	_, pubKey := secp256k1.PrivKeyFromBytes(privKey.Key)
-	tp := txscript.ComputeTaprootKeyNoScript(pubKey)
-	return &PubKey{Key: tp.SerializeCompressed()}
+	return &PubKey{Key: pubKey.SerializeCompressed()}
 }
 
 // Equals - you probably don't need to use this.
@@ -162,7 +161,9 @@ func (pubKey *PubKey) Address() crypto.Address {
 	if err != nil {
 		panic("parse pubkey failed")
 	}
-	witnessProg := schnorr.SerializePubKey(pk)
+
+	tp := txscript.ComputeTaprootKeyNoScript(pk)
+	witnessProg := schnorr.SerializePubKey(tp)
 	return crypto.Address(witnessProg)
 }
 
