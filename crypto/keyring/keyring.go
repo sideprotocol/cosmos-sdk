@@ -523,6 +523,7 @@ func (ks keystore) Delete(uid string) error {
 }
 
 func (ks keystore) KeyByAddress(address sdk.Address) (*Record, error) {
+	println("KeyByAddress", hex.EncodeToString(address.Bytes()), address.String())
 	ik, err := ks.db.Get(addrHexKeyAsString(address))
 	if err != nil {
 		return nil, wrapKeyNotFound(err, fmt.Sprintf("key with address %s not found", address.String()))
