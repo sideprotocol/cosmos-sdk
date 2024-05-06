@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/golang-lru/simplelru"
 	"sigs.k8s.io/yaml"
 
-	btcbetch32 "github.com/cosmos/btcutil/bech32"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/internal/conv"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -518,11 +517,11 @@ func ConsAddressFromBech32(address string) (addr ConsAddress, err error) {
 
 // get ConsAddress from pubkey
 func GetConsAddress(pubkey cryptotypes.PubKey) ConsAddress {
-	converted, err := btcbetch32.ConvertBits(pubkey.Address().Bytes(), 8, 5, true)
-	if err != nil {
-		panic(err)
-	}
-	return ConsAddress(converted)
+	// converted, err := btcbetch32.ConvertBits(pubkey.Address().Bytes(), 8, 5, true)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	return ConsAddress(pubkey.Address())
 }
 
 // Returns boolean for whether two ConsAddress are Equal
