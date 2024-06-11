@@ -150,6 +150,11 @@ func (config *Config) GetBech32ConsensusPubPrefix() string {
 	return config.bech32AddressPrefix["consensus_pub"]
 }
 
+// GetBitcoinChainConfig returns the chain configuration for Bitcoin network
+func (config *Config) GetBitcoinChainConfig() *chaincfg.Params {
+	return config.bitcoinChainConfig
+}
+
 func KeyringServiceName() string {
 	if len(version.Name) == 0 {
 		return DefaultKeyringServiceName
