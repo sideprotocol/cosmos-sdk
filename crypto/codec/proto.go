@@ -7,6 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256r1"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/segwit"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/taproot"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 )
 
@@ -17,10 +19,14 @@ func RegisterInterfaces(registry registry.InterfaceRegistrar) {
 	registry.RegisterImplementations(pk, &ed25519.PubKey{})
 	registry.RegisterImplementations(pk, &secp256k1.PubKey{})
 	registry.RegisterImplementations(pk, &multisig.LegacyAminoPubKey{})
+	registry.RegisterImplementations(pk, &segwit.PubKey{})
+	registry.RegisterImplementations(pk, &taproot.PubKey{})
 
 	var priv *cryptotypes.PrivKey
 	registry.RegisterInterface("cosmos.crypto.PrivKey", priv)
 	registry.RegisterImplementations(priv, &secp256k1.PrivKey{})
 	registry.RegisterImplementations(priv, &ed25519.PrivKey{})
+	registry.RegisterImplementations(priv, &taproot.PrivKey{})
+	registry.RegisterImplementations(priv, &segwit.PrivKey{})
 	secp256r1.RegisterInterfaces(registry)
 }

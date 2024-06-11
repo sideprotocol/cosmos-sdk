@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/version"
 )
 
@@ -16,8 +17,9 @@ type Config struct {
 	bech32AddressPrefix map[string]string
 	mtx                 sync.RWMutex
 
-	sealed   bool
-	sealedch chan struct{}
+	sealed             bool
+	sealedch           chan struct{}
+	bitcoinChainConfig *chaincfg.Params
 }
 
 // cosmos-sdk wide global singleton
@@ -38,6 +40,7 @@ func NewConfig() *Config {
 			"validator_pub":  Bech32PrefixValPub,
 			"consensus_pub":  Bech32PrefixConsPub,
 		},
+		bitcoinChainConfig: &chaincfg.MainNetParams,
 	}
 }
 
@@ -92,6 +95,12 @@ func (config *Config) SetBech32PrefixForConsensusNode(addressPrefix, pubKeyPrefi
 	config.assertNotSealed()
 	config.bech32AddressPrefix["consensus_addr"] = addressPrefix
 	config.bech32AddressPrefix["consensus_pub"] = pubKeyPrefix
+}
+
+// SetBitcoinChainConfig sets the chain configuration for Bitcoin network
+func (config *Config) SetBitcoinChainConfig(chainConfig *chaincfg.Params) {
+	config.assertNotSealed()
+	config.bitcoinChainConfig = chainConfig
 }
 
 // Seal seals the config such that the config state could not be modified further

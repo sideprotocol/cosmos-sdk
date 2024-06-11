@@ -85,7 +85,7 @@ Example:
 	f.Uint32(flagCoinType, sdk.CoinType, "coin type number for HD derivation")
 	f.Uint32(flagAccount, 0, "Account number for HD derivation (less than equal 2147483647)")
 	f.Uint32(flagIndex, 0, "Address index number for HD derivation (less than equal 2147483647)")
-	f.String(flags.FlagKeyType, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
+	f.String(flags.FlagKeyType, string(hd.SegWitType), "Key signing algorithm to generate keys for")
 	f.Bool(flagIndiscreet, false, "Print seed phrase directly on current terminal (only valid when --no-backup is false)")
 
 	// support old flags name for backwards compatibility
@@ -262,7 +262,15 @@ func runAddCmd(ctx client.Context, cmd *cobra.Command, args []string, inBuf *buf
 	useLedger, _ := cmd.Flags().GetBool(flags.FlagUseLedger)
 
 	if len(hdPath) == 0 {
-		hdPath = hd.CreateHDPath(coinType, account, index).String()
+		if algoStr == "segwit" {
+			coinType = 0 //use bitcoin's coin type for segwit
+			hdPath = hd.CreateHDPathWithPurpose(84, coinType, account, index).String()
+		} else if algoStr == "taproot" {
+			coinType = 0 //use bitcoin's coin type for taproot
+			hdPath = hd.CreateHDPathWithPurpose(86, coinType, account, index).String()
+		} else {
+			hdPath = hd.CreateHDPath(coinType, account, index).String()
+		}
 	} else if useLedger {
 		return errors.New("cannot set custom bip32 path with ledger")
 	}
