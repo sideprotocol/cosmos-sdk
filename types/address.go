@@ -684,7 +684,7 @@ func GetFromBech32(bech32str, prefix string) ([]byte, error) {
 		return nil, err
 	}
 
-	if hrp != prefix && hrp != "bc" {
+	if hrp != prefix && hrp != GetConfig().GetBtcChainCfg().Bech32HRPSegwit {
 		return nil, fmt.Errorf("invalid Bech32 prefix; expected %s, got %s", prefix, hrp)
 	}
 

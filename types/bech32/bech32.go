@@ -11,6 +11,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 )
 
+var BtcChainCfg = &chaincfg.MainNetParams
+
 // ConvertAndEncode converts from a base256 encoded byte string to base32 encoded byte string and then to bech32.
 func ConvertAndEncode(hrp string, data []byte) (string, error) {
 	if len(data) == 32 { // taproot
@@ -33,7 +35,7 @@ func DecodeAndConvert(bech string) (string, []byte, error) {
 	addrType := IsBitCoinAddr(bech)
 
 	if addrType == "taproot" {
-		addr, err := btcutil.DecodeAddress(bech, &chaincfg.MainNetParams)
+		addr, err := btcutil.DecodeAddress(bech, BtcChainCfg)
 		if err != nil {
 			return "", nil, fmt.Errorf("decoding bech32 failed: %w", err)
 		}
@@ -63,9 +65,9 @@ func DecodeAndConvert(bech string) (string, []byte, error) {
 }
 
 func IsBitCoinAddr(bech string) string {
-	if strings.HasPrefix(bech, "bc1q") && len(bech) == 42 {
+	if strings.HasPrefix(bech, BtcChainCfg.Bech32HRPSegwit+"1q") && len(bech) == 42 {
 		return "segwit"
-	} else if strings.HasPrefix(bech, "bc1p") && len(bech) == 62 {
+	} else if strings.HasPrefix(bech, BtcChainCfg.Bech32HRPSegwit+"1p") && len(bech) == 62 {
 		return "taproot"
 	}
 	return "cosmos"
