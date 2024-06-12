@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/version"
 )
 
@@ -26,6 +27,9 @@ type Config struct {
 
 	sealed   bool
 	sealedch chan struct{}
+
+	// Bitcoin chainconfig
+	btcChainCfg *chaincfg.Params
 }
 
 // cosmos-sdk wide global singleton
@@ -51,6 +55,8 @@ func NewConfig() *Config {
 		purpose:   Purpose,
 		coinType:  CoinType,
 		txEncoder: nil,
+
+		btcChainCfg: &chaincfg.MainNetParams,
 	}
 }
 
@@ -224,4 +230,15 @@ func KeyringServiceName() string {
 		return DefaultKeyringServiceName
 	}
 	return version.Name
+}
+
+// SetBtcChainCfg sets the chaincfg.Params for Bitcoin
+func (config *Config) SetBtcChainCfg(chaincfg *chaincfg.Params) {
+	config.assertNotSealed()
+	config.btcChainCfg = chaincfg
+}
+
+// GetBtcChainCfg returns the chaincfg.Params for Bitcoin
+func (config *Config) GetBtcChainCfg() *chaincfg.Params {
+	return config.btcChainCfg
 }
