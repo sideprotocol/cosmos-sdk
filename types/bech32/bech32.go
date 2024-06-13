@@ -15,13 +15,17 @@ var BtcChainCfg = &chaincfg.MainNetParams
 
 // ConvertAndEncode converts from a base256 encoded byte string to base32 encoded byte string and then to bech32.
 func ConvertAndEncode(hrp string, data []byte) (string, error) {
-	if len(data) == 32 { // taproot
+	// taproot address
+	if hrp == BtcChainCfg.Bech32HRPSegwit && len(data) == 32 { // taproot
 		return encodeSegWitAddress(hrp, 1, data)
 	}
+	// segwit address
 	bitcoinBech32, err := bech32.Encode(hrp, data)
 	if IsBitCoinAddr(bitcoinBech32) == "segwit" && err == nil {
 		return bitcoinBech32, err
 	}
+
+	// other cosmos addresses
 	converted, err := bech32.ConvertBits(data, 8, 5, true)
 	if err != nil {
 		return "", fmt.Errorf("encoding bech32 failed: %w", err)
