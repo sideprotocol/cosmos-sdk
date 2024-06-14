@@ -310,7 +310,13 @@ func (aa AccAddress) String() string {
 			return addr.(string)
 		}
 	}
-	return cacheBech32Addr(GetConfig().GetBech32AccountAddrPrefix(), aa, accAddrCache, key)
+
+	prefix := GetConfig().GetBech32AccountAddrPrefix()
+	if len(aa.Bytes()) != 20 {
+		prefix = GetConfig().GetBtcChainCfg().Bech32HRPSegwit
+	}
+
+	return cacheBech32Addr(prefix, aa, accAddrCache, key)
 }
 
 // Format implements the fmt.Formatter interface.
@@ -684,11 +690,11 @@ func GetFromBech32(bech32str, prefix string) ([]byte, error) {
 		return nil, err
 	}
 
-	if hrp != prefix && hrp != GetConfig().GetBtcChainCfg().Bech32HRPSegwit {
-		return nil, fmt.Errorf("invalid Bech32 prefix; expected %s, got %s", prefix, hrp)
+	if hrp == prefix || hrp == bech32.BtcChainCfg.Bech32HRPSegwit {
+		return bz, nil
 	}
 
-	return bz, nil
+	return nil, fmt.Errorf("invalid Bech32 prefix; expected %s, got %s", prefix, hrp)
 }
 
 func addressBytesFromHexString(address string) ([]byte, error) {

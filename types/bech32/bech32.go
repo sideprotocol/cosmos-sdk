@@ -15,14 +15,18 @@ var BtcChainCfg = &chaincfg.MainNetParams
 
 // ConvertAndEncode converts from a base256 encoded byte string to base32 encoded byte string and then to bech32.
 func ConvertAndEncode(hrp string, data []byte) (string, error) {
-	// taproot address
-	if hrp == BtcChainCfg.Bech32HRPSegwit && len(data) == 32 { // taproot
-		return encodeSegWitAddress(hrp, 1, data)
-	}
-	// segwit address
-	bitcoinBech32, err := bech32.Encode(hrp, data)
-	if IsBitCoinAddr(bitcoinBech32) == "segwit" && err == nil {
-		return bitcoinBech32, err
+
+	// use length of hrp to determine if it is an account address
+	// check if address is a taproot/sigwit address
+	if len(hrp) < 6 {
+		if len(data) == 32 { // taproot
+			return encodeSegWitAddress(BtcChainCfg.Bech32HRPSegwit, 1, data)
+		}
+		// segwit address
+		bitcoinBech32, err := bech32.Encode(BtcChainCfg.Bech32HRPSegwit, data)
+		if IsBitCoinAddr(bitcoinBech32) == "segwit" && err == nil {
+			return bitcoinBech32, err
+		}
 	}
 
 	// other cosmos addresses
@@ -35,29 +39,26 @@ func ConvertAndEncode(hrp string, data []byte) (string, error) {
 
 // DecodeAndConvert decodes a bech32 encoded string and converts to base256 encoded bytes.
 func DecodeAndConvert(bech string) (string, []byte, error) {
-	// println("bech32.Decode(bech, 1000)", bech)
+
 	addrType := IsBitCoinAddr(bech)
 
 	if addrType == "taproot" {
 		addr, err := btcutil.DecodeAddress(bech, BtcChainCfg)
 		if err != nil {
-			return "", nil, fmt.Errorf("decoding bech32 failed: %w", err)
+			return "", nil, fmt.Errorf("decoding taproot bech32 failed: %w", err)
 		}
-		return "bc", addr.ScriptAddress(), nil
+		return BtcChainCfg.Bech32HRPSegwit, addr.ScriptAddress(), nil
 	} else if addrType == "segwit" {
 		hrp, data, err := bech32.Decode(bech)
 		if err != nil {
-			return "", nil, fmt.Errorf("decoding bech32 failed: %w", err)
+			return "", nil, fmt.Errorf("decoding segwit bech32 failed: %w", err)
 		}
 		return hrp, data, nil
 	}
 
 	hrp, data, err := bech32.Decode(bech)
-
 	if err != nil {
-		if err != nil {
-			return "", nil, fmt.Errorf("decoding bech32 failed: %w", err)
-		}
+		return "", nil, fmt.Errorf("decoding bech32 failed: %w", err)
 	}
 
 	converted, err := bech32.ConvertBits(data, 5, 8, false)
