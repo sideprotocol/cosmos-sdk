@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/cosmos/cosmos-sdk/version"
 )
 
@@ -224,4 +226,15 @@ func KeyringServiceName() string {
 		return DefaultKeyringServiceName
 	}
 	return version.Name
+}
+
+// SetBtcChainCfg sets the chaincfg.Params for Bitcoin
+func (config *Config) SetBtcChainCfg(chaincfg *chaincfg.Params) {
+	config.assertNotSealed()
+	bech32.BtcChainCfg = chaincfg
+}
+
+// GetBtcChainCfg returns the chaincfg.Params for Bitcoin
+func (config *Config) GetBtcChainCfg() *chaincfg.Params {
+	return bech32.BtcChainCfg
 }
