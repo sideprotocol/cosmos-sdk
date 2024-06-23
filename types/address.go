@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/golang-lru/simplelru"
 	"sigs.k8s.io/yaml"
 
-	btcbetch32 "github.com/cosmos/btcutil/bech32"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/internal/conv"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -311,7 +310,13 @@ func (aa AccAddress) String() string {
 			return addr.(string)
 		}
 	}
-	return cacheBech32Addr(GetConfig().GetBech32AccountAddrPrefix(), aa, accAddrCache, key)
+
+	prefix := GetConfig().GetBech32AccountAddrPrefix()
+	if len(aa.Bytes()) != 20 {
+		prefix = GetConfig().GetBtcChainCfg().Bech32HRPSegwit
+	}
+
+	return cacheBech32Addr(prefix, aa, accAddrCache, key)
 }
 
 // Format implements the fmt.Formatter interface.
@@ -518,11 +523,11 @@ func ConsAddressFromBech32(address string) (addr ConsAddress, err error) {
 
 // get ConsAddress from pubkey
 func GetConsAddress(pubkey cryptotypes.PubKey) ConsAddress {
-	converted, err := btcbetch32.ConvertBits(pubkey.Address().Bytes(), 8, 5, true)
-	if err != nil {
-		panic(err)
-	}
-	return ConsAddress(converted)
+	// converted, err := btcbetch32.ConvertBits(pubkey.Address().Bytes(), 8, 5, true)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	return ConsAddress(pubkey.Address())
 }
 
 // Returns boolean for whether two ConsAddress are Equal
@@ -685,11 +690,11 @@ func GetFromBech32(bech32str, prefix string) ([]byte, error) {
 		return nil, err
 	}
 
-	if hrp != prefix && hrp != "bc" {
-		return nil, fmt.Errorf("invalid Bech32 prefix; expected %s, got %s", prefix, hrp)
+	if hrp == prefix || hrp == bech32.BtcChainCfg.Bech32HRPSegwit {
+		return bz, nil
 	}
 
-	return bz, nil
+	return nil, fmt.Errorf("invalid Bech32 prefix; expected %s, got %s", prefix, hrp)
 }
 
 func addressBytesFromHexString(address string) ([]byte, error) {
@@ -705,14 +710,7 @@ func cacheBech32Addr(prefix string, addr []byte, cache *simplelru.LRU, cacheKey 
 
 	bech32Addr, err := bech32.ConvertAndEncode(prefix, addr)
 	if err != nil {
-		// converted, err := btcbetch32.ConvertBits(addr, 8, 5, true)
-		// if err != nil {
-		// 	panic(err)
-		// }
-		bech32Addr, err = btcbetch32.Encode(prefix, addr)
-		if err != nil {
-			panic(err)
-		}
+		panic(err)
 	}
 
 	if IsAddrCacheEnabled() {

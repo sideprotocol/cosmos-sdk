@@ -213,6 +213,9 @@ func runAddCmd(ctx client.Context, cmd *cobra.Command, args []string, inBuf *buf
 		if algoStr == "segwit" {
 			coinType = 0 //use bitcoin's coin type for segwit
 			hdPath = hd.CreateHDPathWithPurpose(84, coinType, account, index).String()
+		} else if algoStr == "taproot" {
+			coinType = 0 //use bitcoin's coin type for taproot
+			hdPath = hd.CreateHDPathWithPurpose(86, coinType, account, index).String()
 		} else {
 			hdPath = hd.CreateHDPath(coinType, account, index).String()
 		}

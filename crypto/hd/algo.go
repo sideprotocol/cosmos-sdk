@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/segwit"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/taproot"
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 )
 
@@ -24,11 +25,13 @@ const (
 	// Sr25519Type represents the Sr25519Type signature system.
 	Sr25519Type = PubKeyType("sr25519")
 	SegWitType  = PubKeyType("segwit")
+	TaprootType = PubKeyType("taproot")
 )
 
 // Secp256k1 uses the Bitcoin secp256k1 ECDSA parameters.
 var Secp256k1 = secp256k1Algo{}
 var SegWit = segWigAlgo{}
+var Taproot = taprootAlgo{}
 
 type (
 	DeriveFn   func(mnemonic string, bip39Passphrase, hdPath string) ([]byte, error)
@@ -108,5 +111,42 @@ func (s segWigAlgo) Generate() GenerateFn {
 		copy(bzArr, bz)
 
 		return &segwit.PrivKey{Key: bzArr}
+	}
+}
+
+type taprootAlgo struct{}
+
+func (s taprootAlgo) Name() PubKeyType {
+	return TaprootType
+}
+
+// Derive derives and returns the secp256k1 private key for the given seed and HD path.
+func (s taprootAlgo) Derive() DeriveFn {
+	return func(mnemonic string, bip39Passphrase, hdPath string) ([]byte, error) {
+		if !strings.HasPrefix(hdPath, "m/86'") {
+			panic("Invalid HD path for Taproot")
+		}
+		seed, err := bip39.NewSeedWithErrorChecking(mnemonic, bip39Passphrase)
+		if err != nil {
+			return nil, err
+		}
+
+		masterPriv, ch := ComputeMastersFromSeed(seed)
+		if len(hdPath) == 0 {
+			return masterPriv[:], nil
+		}
+		derivedKey, err := DerivePrivateKeyForPath(masterPriv, ch, hdPath)
+
+		return derivedKey, err
+	}
+}
+
+// Generate generates a secp256k1 private key from the given bytes.
+func (s taprootAlgo) Generate() GenerateFn {
+	return func(bz []byte) types.PrivKey {
+		bzArr := make([]byte, taproot.PrivKeySize)
+		copy(bzArr, bz)
+
+		return &taproot.PrivKey{Key: bzArr}
 	}
 }

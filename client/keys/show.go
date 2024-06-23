@@ -1,6 +1,9 @@
 package keys
 
 import (
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -20,7 +23,8 @@ const (
 	// FlagAddress is the flag for the user's address on the command line.
 	FlagAddress = "address"
 	// FlagPublicKey represents the user's public key on the command line.
-	FlagPublicKey = "pubkey"
+	FlagPublicKey    = "pubkey"
+	FlagPublicKeyHex = "pubkeyhex"
 	// FlagBechPrefix defines a desired Bech32 prefix encoding for a key.
 	FlagBechPrefix = "bech"
 	// FlagDevice indicates that the information should be shown in the device
@@ -44,6 +48,7 @@ consisting of all the keys provided by name and multisig threshold.`,
 	f.String(FlagBechPrefix, sdk.PrefixAccount, "The Bech32 prefix encoding for a key (acc|val|cons)")
 	f.BoolP(FlagAddress, "a", false, "Output the address only (overrides --output)")
 	f.BoolP(FlagPublicKey, "p", false, "Output the public key only (overrides --output)")
+	f.BoolP(FlagPublicKeyHex, "", false, "Output the public key hex only (overrides --output)")
 	f.BoolP(FlagDevice, "d", false, "Output the address in a ledger device")
 	f.Int(flagMultiSigThreshold, 1, "K out of N required signatures")
 
@@ -93,6 +98,7 @@ func runShowCmd(cmd *cobra.Command, args []string) (err error) {
 	isShowAddr, _ := cmd.Flags().GetBool(FlagAddress)
 	isShowPubKey, _ := cmd.Flags().GetBool(FlagPublicKey)
 	isShowDevice, _ := cmd.Flags().GetBool(FlagDevice)
+	isShowPubKeyHex, _ := cmd.Flags().GetBool(FlagPublicKeyHex)
 
 	isOutputSet := false
 	tmp := cmd.Flag(cli.OutputFlag)
@@ -119,7 +125,7 @@ func runShowCmd(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	switch {
-	case isShowAddr, isShowPubKey:
+	case isShowAddr, isShowPubKey, isShowPubKeyHex:
 		ko, err := bechKeyOut(k)
 		if err != nil {
 			return err
@@ -127,6 +133,12 @@ func runShowCmd(cmd *cobra.Command, args []string) (err error) {
 		out := ko.Address
 		if isShowPubKey {
 			out = ko.PubKey
+		}
+		if isShowPubKeyHex {
+			var key Key
+			json.Unmarshal([]byte(ko.PubKey), &key)
+			bz, _ := base64.StdEncoding.DecodeString(key.Key)
+			out = hex.EncodeToString(bz)
 		}
 
 		if _, err := fmt.Fprintln(cmd.OutOrStdout(), out); err != nil {
@@ -208,4 +220,9 @@ func getBechKeyOut(bechPrefix string) (bechKeyOutFn, error) {
 	}
 
 	return nil, fmt.Errorf("invalid Bech32 prefix encoding provided: %s", bechPrefix)
+}
+
+type Key struct {
+	Types string `json:"@type" yaml:"@type"`
+	Key   string
 }
