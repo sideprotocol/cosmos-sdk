@@ -103,7 +103,7 @@ func NewOption() Option {
 	}
 }
 
-func TestNewAccount(t *testing.T) {
+func TestNewAccountSegwit(t *testing.T) {
 
 	cdc := getCodec()
 
